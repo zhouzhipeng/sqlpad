@@ -32,41 +32,43 @@ function shutdownClient(client) {
  * @param {string} query
  * @param {object} connection
  */
-async function runQuery(query, connection) {
-  const {
-    contactPoints,
-    keyspace,
-    localDataCenter,
-    maxRows,
-    username,
-    password
-  } = connection;
+function runQuery(query, connection) {
   const caConfig = {
-    contactPoints: contactPoints.split(',').map(cp => cp.trim()),
+    contactPoints: connection.contactPoints.split(',').map(cp => cp.trim()),
     // Unfamiliar with cassandra - docs mention datacenter1 and this works as a default so leaving it in
     // If someone familiar with cassandra can expand on this please do
-    localDataCenter: localDataCenter || 'datacenter1',
-    keyspace
+    localDataCenter: connection.localDataCenter || 'datacenter1',
+    keyspace: connection.keyspace
   };
 
   if (connection.username && connection.password) {
     caConfig['authProvider'] = new cassandra.auth.PlainTextAuthProvider(
-      username,
-      password
+      connection.username,
+      connection.password
     );
   }
 
   const client = new cassandra.Client(caConfig);
 
-  try {
-    const result = await client.execute(query, [], { fetchSize: maxRows });
-    shutdownClient(client);
-    const incomplete = result.rows && result.rows.length === maxRows;
-    return { rows: result.rows, incomplete };
-  } catch (error) {
-    shutdownClient(client);
-    throw error;
-  }
+  return new Promise((resolve, reject) => {
+    client.execute(
+      query,
+      [],
+      { fetchSize: connection.maxRows },
+      (err, result) => {
+        let incomplete =
+          result.rows && result.rows.length === connection.maxRows;
+
+        if (err) {
+          shutdownClient(client);
+          return reject(err);
+        } else {
+          shutdownClient(client);
+          return resolve({ rows: result.rows, incomplete });
+        }
+      }
+    );
+  });
 }
 
 /**
