@@ -32,12 +32,12 @@ RUN npm run build --prefix client && \
     cp -r client/build/* server/public
 
 # Build test db used for dev, debugging and running tests
-RUN node server/generate-test-db-fixture.js
+#RUN node server/generate-test-db-fixture.js
 
 # Run tests and linting to validate build
 ENV SKIP_INTEGRATION true
-RUN npm run test --prefix server
-RUN npm run lint
+#RUN npm run test --prefix server
+#RUN npm run lint
 
 # Remove any dev dependencies from server
 # We don't care about root or client directories 
