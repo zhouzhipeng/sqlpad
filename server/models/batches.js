@@ -1,5 +1,6 @@
 const sqlLimiter = require('sql-limiter');
 const ensureJson = require('./ensure-json');
+const { Parser } = require('node-sql-parser');
 
 class Batches {
   /**
@@ -95,27 +96,44 @@ class Batches {
       const statements = [];
       let i = 0;
 
+      const parser = new Parser();
+
       for (let statementText of statementTexts) {
         // TODO: parse table name from statementText
-        let tableName = 'person';
+        // usage: https://www.npmjs.com/package/node-sql-parser
+        const ast = parser.astify(statementText); // mysql sql grammer parsed by default
 
-        for (let doc of docs) {
-          const schemas = ensureJson(doc.data).schemas;
-          for (let db of schemas) {
-            for (let table of db.tables) {
-              if (table.name === tableName) {
-                statements.push({
-                  batchId: createdBatch.id,
-                  sequence: i++,
-                  statementText,
-                  status: error ? 'error' : 'queued',
-                  error: error && { title: error.message },
-                  connectionId: doc.connectionId,
-                  database: db.name,
-                });
+        if (ast.type === 'select') {
+          let tableName = ast.from[0].table;
+
+          for (let doc of docs) {
+            const schemas = ensureJson(doc.data).schemas;
+            for (let db of schemas) {
+              for (let table of db.tables) {
+                if (table.name === tableName) {
+                  statements.push({
+                    batchId: createdBatch.id,
+                    sequence: i++,
+                    statementText,
+                    status: error ? 'error' : 'queued',
+                    error: error && { title: error.message },
+                    connectionId: doc.connectionId,
+                    database: db.name,
+                  });
+                }
               }
             }
           }
+        } else {
+          statements.push({
+            batchId: createdBatch.id,
+            sequence: i++,
+            statementText,
+            status: error ? 'error' : 'queued',
+            error: error && { title: error.message },
+            connectionId: batch.connectionId,
+            database: ast.table[0].db,
+          });
         }
       }
 
