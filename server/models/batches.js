@@ -74,6 +74,8 @@ class Batches {
         transaction,
       });
 
+      //todo: scan schema info
+
       const statements = statementTexts.map((statementText, i) => {
         return {
           batchId: createdBatch.id,
@@ -81,6 +83,8 @@ class Batches {
           statementText,
           status: error ? 'error' : 'queued',
           error: error && { title: error.message },
+          connectionId: createdBatch.connectionId,
+          database: 'test',
         };
       });
 

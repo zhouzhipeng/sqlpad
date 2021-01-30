@@ -13,6 +13,14 @@ module.exports = function (sequelize) {
         type: Sequelize.UUID,
         allowNull: false,
       },
+      connectionId: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      database: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
       sequence: {
         type: Sequelize.INTEGER,
         allowNull: false,
