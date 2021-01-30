@@ -37,6 +37,7 @@ async function getConnectionSchema(req, res) {
   }
 
   if (Object.keys(schemaInfo).length) {
+    schemaInfo.connectionId = connectionId;
     await models.schemaInfo.saveSchemaInfo(schemaCacheId, schemaInfo);
   }
   return res.utils.data(schemaInfo);

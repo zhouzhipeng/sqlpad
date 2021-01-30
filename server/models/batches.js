@@ -23,12 +23,25 @@ class Batches {
       where: { batchId: id },
       order: [['sequence', 'ASC']],
     });
-    batch.statements = statements.map((s) => {
+
+    batch.statements = [];
+    for (let s of statements) {
       s = s.toJSON();
       s.columns = ensureJson(s.columns);
       s.error = ensureJson(s.error);
-      return s;
-    });
+
+      // qyery connection info
+      // eslint-disable-next-line no-await-in-loop
+      let connection = await this.sequelizeDb.Connections.findOne({
+        where: { id: s.connectionId },
+      });
+      if (connection) {
+        connection = connection.toJSON();
+        s.connectionName = connection.name;
+      }
+
+      batch.statements.push(s);
+    }
 
     return batch;
   }
@@ -74,19 +87,37 @@ class Batches {
         transaction,
       });
 
-      //todo: scan schema info
-
-      const statements = statementTexts.map((statementText, i) => {
-        return {
-          batchId: createdBatch.id,
-          sequence: i + 1,
-          statementText,
-          status: error ? 'error' : 'queued',
-          error: error && { title: error.message },
-          connectionId: createdBatch.connectionId,
-          database: 'test2',
-        };
+      // scan schema info
+      const docs = await this.sequelizeDb.Cache.findAll({
+        where: { name: 'schema cache' },
       });
+
+      const statements = [];
+      let i = 0;
+
+      for (let statementText of statementTexts) {
+        // TODO: parse table name from statementText
+        let tableName = 'person';
+
+        for (let doc of docs) {
+          const schemas = ensureJson(doc.data).schemas;
+          for (let db of schemas) {
+            for (let table of db.tables) {
+              if (table.name === tableName) {
+                statements.push({
+                  batchId: createdBatch.id,
+                  sequence: i++,
+                  statementText,
+                  status: error ? 'error' : 'queued',
+                  error: error && { title: error.message },
+                  connectionId: doc.connectionId,
+                  database: db.name,
+                });
+              }
+            }
+          }
+        }
+      }
 
       await this.sequelizeDb.Statements.bulkCreate(statements, { transaction });
     });

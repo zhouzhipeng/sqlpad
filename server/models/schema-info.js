@@ -43,10 +43,16 @@ class SchemaInfo {
         data: schema,
         expiryDate,
         name: 'schema cache',
+        connectionId: schema.connectionId,
       });
     } else {
       return this.sequelizeDb.Cache.update(
-        { data: schema, expiryDate, name: 'schema cache' },
+        {
+          data: schema,
+          expiryDate,
+          name: 'schema cache',
+          connectionId: schema.connectionId,
+        },
         { where: { id } }
       );
     }

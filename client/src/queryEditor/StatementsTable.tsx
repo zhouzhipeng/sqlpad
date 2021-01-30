@@ -36,7 +36,8 @@ function StatementTableRow({ statement }: { statement: Statement }) {
             selectStatementId(statement.id);
           }}
         >
-          {statement.sequence}. {statement.statementText.trim()}
+          [{statement.connectionName}][{statement.database}]
+          {statement.statementText.trim()}
         </Button>
       </td>
       <td>{statusContent}</td>

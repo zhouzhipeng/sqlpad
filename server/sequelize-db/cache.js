@@ -8,6 +8,10 @@ module.exports = function (sequelize) {
         type: DataTypes.STRING,
         primaryKey: true,
       },
+      connectionId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       name: {
         type: DataTypes.STRING,
         allowNull: false,

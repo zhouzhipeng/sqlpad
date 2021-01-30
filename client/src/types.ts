@@ -45,6 +45,8 @@ export interface Statement {
   id: string;
   batchId: string;
   sequence: number;
+  database: string;
+  connectionName: string;
   statementText: string;
   status: 'queued' | 'started' | 'finished' | 'error';
   startTime?: string | Date;
