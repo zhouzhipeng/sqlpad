@@ -84,7 +84,7 @@ class Batches {
           status: error ? 'error' : 'queued',
           error: error && { title: error.message },
           connectionId: createdBatch.connectionId,
-          database: 'test',
+          database: 'test2',
         };
       });
 

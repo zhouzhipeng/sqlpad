@@ -30,21 +30,15 @@ async function executeBatch(config, models, webhooks, batchId) {
     // If a new connectionClient was created *and* connected, take note to disconnect later
     let connectionClient;
     let disconnectOnFinish = false;
-    if (batch.connectionClientId) {
-      connectionClient = models.connectionClients.getOneById(
-        batch.connectionClientId
-      );
-      if (!connectionClient) {
-        throw new Error('Connection client disconnected');
-      }
-    } else {
-      connectionClient = new ConnectionClient(connection, user);
-      // If connectionClient supports the "Client" driver,
-      // and it is not connected, connect it
-      if (connectionClient.Client && !connectionClient.isConnected()) {
-        await connectionClient.connect();
-        disconnectOnFinish = true;
-      }
+
+    connection.database = statement.database;
+
+    connectionClient = new ConnectionClient(connection, user);
+    // If connectionClient supports the "Client" driver,
+    // and it is not connected, connect it
+    if (connectionClient.Client && !connectionClient.isConnected()) {
+      await connectionClient.connect();
+      disconnectOnFinish = true;
     }
 
     let statementStartTime = new Date();
