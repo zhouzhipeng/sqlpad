@@ -101,6 +101,12 @@ class Batches {
       for (let statementText of statementTexts) {
         // parse table name from statementText
         // usage: https://www.npmjs.com/package/node-sql-parser
+        statementText = statementText.trim();
+        let prefixDbPattern = statementText.match(/^\/\*(.+)\*\//);
+        let databaseInComment = null;
+        if (prefixDbPattern) {
+          databaseInComment = prefixDbPattern[1].trim();
+        }
         let ast;
         try {
           ast = parser.astify(statementText); // mysql sql grammer parsed by default
@@ -120,7 +126,7 @@ class Batches {
 
         if (ast.type === 'select') {
           let tableName = ast.from[0].table;
-          let dbName = ast.from[0].db;
+          let dbName = ast.from[0].db || databaseInComment;
 
           for (let doc of docs) {
             const schemas = ensureJson(doc.data).schemas;
@@ -146,15 +152,44 @@ class Batches {
             }
           }
         } else {
-          statements.push({
-            batchId: createdBatch.id,
-            sequence: i++,
-            statementText,
-            status: error ? 'error' : 'queued',
-            error: error && { title: error.message },
-            connectionId: batch.connectionId,
-            database: ast.table[0].db,
-          });
+          let dbName = ast.table[0].db || databaseInComment;
+          let tableName = ast.table[0].table;
+          if (!dbName) {
+            // 修改sql必须指定db.
+            statements.push({
+              batchId: createdBatch.id,
+              sequence: i++,
+              statementText,
+              status: 'error',
+              error: { title: 'No Database Specified.' },
+              connectionId: batch.connectionId,
+            });
+            break;
+          }
+
+          for (let doc of docs) {
+            const schemas = ensureJson(doc.data).schemas;
+            for (let db of schemas) {
+              if (dbName && db.name !== dbName) {
+                // eslint-disable-next-line no-continue
+                continue;
+              }
+              for (let table of db.tables) {
+                if (table.name === tableName) {
+                  statements.push({
+                    batchId: createdBatch.id,
+                    sequence: i++,
+                    statementText,
+                    status: error ? 'error' : 'queued',
+                    error: error && { title: error.message },
+                    connectionId: doc.connectionId,
+                    database: dbName,
+                  });
+                  break;
+                }
+              }
+            }
+          }
         }
       }
 

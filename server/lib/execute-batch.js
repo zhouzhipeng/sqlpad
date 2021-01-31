@@ -44,15 +44,15 @@ async function executeBatch(config, models, webhooks, batchId) {
     connection.database = statement.database;
 
     connectionClient = new ConnectionClient(connection, user);
-    // If connectionClient supports the "Client" driver,
-    // and it is not connected, connect it
-    if (connectionClient.Client && !connectionClient.isConnected()) {
-      await connectionClient.connect();
-      disconnectOnFinish = true;
-    }
-
     let statementStartTime = new Date();
     try {
+      // If connectionClient supports the "Client" driver,
+      // and it is not connected, connect it
+      if (connectionClient.Client && !connectionClient.isConnected()) {
+        await connectionClient.connect();
+        disconnectOnFinish = true;
+      }
+
       await models.statements.updateStarted(statement.id, statementStartTime);
       queryResult = await connectionClient.runQuery(statement.statementText);
       stopTime = new Date();
