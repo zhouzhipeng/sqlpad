@@ -32,6 +32,10 @@ export default function searchSchemaInfo(
   connectionSchema: ConnectionSchema,
   search: string
 ) {
+  if (!search.trim()) {
+    return connectionSchema;
+  }
+
   let filteredSchemas: Schema[] = [];
   const searchRegEx = new RegExp(search, 'i');
 

@@ -193,6 +193,17 @@ class Batches {
         }
       }
 
+      if (statements.length === 0) {
+        statements.push({
+          batchId: createdBatch.id,
+          sequence: i++,
+          statementText: queryText,
+          status: 'error',
+          error: { title: 'Database or Table not Found.' },
+          connectionId: batch.connectionId,
+        });
+      }
+
       await this.sequelizeDb.Statements.bulkCreate(statements, { transaction });
     });
 
