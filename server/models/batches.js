@@ -99,16 +99,36 @@ class Batches {
       const parser = new Parser();
 
       for (let statementText of statementTexts) {
-        // TODO: parse table name from statementText
+        // parse table name from statementText
         // usage: https://www.npmjs.com/package/node-sql-parser
-        const ast = parser.astify(statementText); // mysql sql grammer parsed by default
+        let ast;
+        try {
+          ast = parser.astify(statementText); // mysql sql grammer parsed by default
+        } catch (e) {
+          error = e;
+          statements.push({
+            batchId: createdBatch.id,
+            sequence: i++,
+            statementText,
+            status: error ? 'error' : 'queued',
+            error: error && { title: error.message },
+            connectionId: batch.connectionId,
+          });
+
+          break;
+        }
 
         if (ast.type === 'select') {
           let tableName = ast.from[0].table;
+          let dbName = ast.from[0].db;
 
           for (let doc of docs) {
             const schemas = ensureJson(doc.data).schemas;
             for (let db of schemas) {
+              if (dbName && db.name !== dbName) {
+                // eslint-disable-next-line no-continue
+                continue;
+              }
               for (let table of db.tables) {
                 if (table.name === tableName) {
                   statements.push({
@@ -120,6 +140,7 @@ class Batches {
                     connectionId: doc.connectionId,
                     database: db.name,
                   });
+                  break;
                 }
               }
             }

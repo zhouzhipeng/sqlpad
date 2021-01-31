@@ -20,10 +20,20 @@ async function executeBatch(config, models, webhooks, batchId) {
   let statementError;
   for (const statement of batch.statements) {
     // get connection from statement.
-
     const connection = await models.connections.findOneById(
       statement.connectionId
     );
+
+    if (statement.status === 'error') {
+      stopTime = new Date();
+      const updatedBatch = await models.batches.update(batch.id, {
+        status: 'error',
+        stopTime,
+        durationMs: stopTime - batchStartTime,
+      });
+      webhooks.statementFinished(user, connection, updatedBatch, statement.id);
+      return;
+    }
 
     // Get existing connectionClient if one was specified to use per batch
     // Otherwise create a new one and connect it if the ConnectionClient supports it.
