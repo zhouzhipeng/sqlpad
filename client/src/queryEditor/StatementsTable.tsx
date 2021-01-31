@@ -36,8 +36,12 @@ function StatementTableRow({ statement }: { statement: Statement }) {
             selectStatementId(statement.id);
           }}
         >
-          [{statement.connectionName}][{statement.database}]
-          {statement.statementText.trim()}
+          [
+          {statement.connectionName.substr(
+            0,
+            Math.min(10, statement.connectionName.length)
+          )}
+          ][{statement.database}]{statement.statementText.trim()}
         </Button>
       </td>
       <td>{statusContent}</td>
