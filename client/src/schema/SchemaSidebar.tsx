@@ -21,6 +21,7 @@ import Text from '../common/Text';
 import Tooltip from '../common/Tooltip';
 import { loadSchema, toggleSchemaItem } from '../stores/editor-actions';
 import {
+  useAllSchemas,
   useSchemaState,
   useSessionConnectionId,
   useSessionSchemaExpanded,
@@ -92,16 +93,13 @@ function SchemaSidebar() {
   const [schemaItemId, setSchemaItemId] = useState('');
 
   const expanded = useSessionSchemaExpanded(connectionId);
-  const { loading, connectionSchema, error } = useSchemaState(connectionId);
+  const allSchemas = useAllSchemas();
 
-  const handleRefreshClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (connectionId) {
-      loadSchema(connectionId, true);
-    }
-  };
-
-  const filteredSchemaInfo = searchSchemaInfo(connectionSchema || {}, search);
+  const filteredSchemaInfo = searchSchemaInfo(
+    allSchemas || [],
+    search,
+    expanded
+  );
   const visibleItems = getSchemaList(filteredSchemaInfo, expanded);
 
   const Row: React.FunctionComponent<{
@@ -118,7 +116,10 @@ function SchemaSidebar() {
 
     let icon = null;
 
-    const expandable = row.type === 'schema' || row.type === 'table';
+    const expandable =
+      row.type === 'connection' ||
+      row.type === 'schema' ||
+      row.type === 'table';
     if (expandable) {
       classNames.push(styles.expandable);
       icon = expanded[row.id] ? (
@@ -189,32 +190,23 @@ function SchemaSidebar() {
   };
 
   let content: ReactNode = null;
-  if (error) {
-    content = <ErrorBlock>{error}</ErrorBlock>;
-  } else if (loading) {
-    content = (
-      <div className={styles.schemaSpinner}>
-        <SpinKitCube />
-      </div>
-    );
-  } else if (true) {
-    content = (
-      <ul style={{ paddingLeft: 0 }}>
-        <List
-          // position absolute takes list out of flow,
-          // preventing some weird react-measure behavior in Firefox
-          style={{ position: 'absolute' }}
-          height={dimensions.height}
-          itemCount={visibleItems.length}
-          itemSize={22}
-          width={dimensions.width}
-          overscanCount={10}
-        >
-          {Row}
-        </List>
-      </ul>
-    );
-  }
+
+  content = (
+    <ul style={{ paddingLeft: 0 }}>
+      <List
+        // position absolute takes list out of flow,
+        // preventing some weird react-measure behavior in Firefox
+        style={{ position: 'absolute' }}
+        height={dimensions.height}
+        itemCount={visibleItems.length}
+        itemSize={22}
+        width={dimensions.width}
+        overscanCount={10}
+      >
+        {Row}
+      </List>
+    </ul>
+  );
 
   // On right-click we'd like to show a context menu related to item clicked
   // For now this will be options to copy the full path of the item
@@ -255,19 +247,11 @@ function SchemaSidebar() {
           <div style={{ display: 'flex' }}>
             <Input
               value={search}
-              placeholder="Search schema"
+              placeholder="Search"
               onChange={(event: ChangeEvent<HTMLInputElement>) =>
                 setSearch(event.target.value)
               }
             />
-            <IconButton
-              tooltip="Refresh schema"
-              style={{ marginLeft: 8 }}
-              disabled={loading}
-              onClick={handleRefreshClick}
-            >
-              <RefreshIcon />
-            </IconButton>
           </div>
 
           <Divider style={{ margin: '4px 0' }} />

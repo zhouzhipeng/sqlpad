@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { loadSchema } from '../stores/editor-actions';
+import { loadAllSchemas, loadSchema } from '../stores/editor-actions';
 import { useSessionConnectionId } from '../stores/editor-store';
 
 /**
@@ -11,11 +11,15 @@ import { useSessionConnectionId } from '../stores/editor-store';
 function SchemaInfoLoader() {
   const selectedConnectionId = useSessionConnectionId();
 
-  useEffect(() => {
-    if (selectedConnectionId) {
-      loadSchema(selectedConnectionId);
-    }
-  }, [selectedConnectionId]);
+  loadAllSchemas();
+  // loadSchema(selectedConnectionId);
+  // useEffect(() => {
+  //   // if (selectedConnectionId) {
+  //   //   loadSchema(selectedConnectionId);
+  //   // }
+  //
+  //   loadAllSchemas();
+  // }, [selectedConnectionId]);
 
   return null;
 }

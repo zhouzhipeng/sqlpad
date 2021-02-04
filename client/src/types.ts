@@ -282,6 +282,8 @@ export interface Schema {
 export interface ConnectionSchema {
   schemas?: Schema[];
   tables?: SchemaTable[];
+  connectionName: string;
+  connectionId: string;
 }
 
 export type QueryHistoryResponse = Array<Record<string, any>>;

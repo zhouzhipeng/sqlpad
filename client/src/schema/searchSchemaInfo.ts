@@ -1,4 +1,5 @@
 import { ConnectionSchema, Schema, SchemaTable } from '../types';
+import { ExpandedMap } from '../stores/editor-store';
 
 function searchTables(tables: SchemaTable[], searchRegEx: RegExp) {
   const res: SchemaTable[] = [];
@@ -25,37 +26,50 @@ function searchDatabases(databases: Schema[], searchRegEx: RegExp) {
 
 /**
  * Search connectionSchema (the hierarchy object storage of schema data) for the search string passed in
- * @param connectionSchema
+ * @param connectionSchemas
  * @param  search
  */
 export default function searchSchemaInfo(
-  connectionSchema: ConnectionSchema,
-  search: string
+  connectionSchemas: ConnectionSchema[],
+  search: string,
+  expanded: ExpandedMap
 ) {
   if (!search.trim()) {
-    return connectionSchema;
+    return connectionSchemas;
   }
 
-  let filteredSchemas: Schema[] = [];
+  let resultConnectionSchemas = [];
+
   const searchRegEx = new RegExp(search, 'i');
+  for (let connectionSchema of connectionSchemas) {
+    if (connectionSchema.schemas) {
+      let filteredSchemas: Schema[] = [];
+      connectionSchema.schemas.forEach((schema) => {
+        const filteredTables = searchTables(schema.tables, searchRegEx);
+        if (filteredTables.length) {
+          expanded[`${connectionSchema.connectionId}.${schema.name}`] = true;
+          for (let table of filteredTables) {
+            expanded[
+              `${connectionSchema.connectionId}.${schema.name}.${table.name}`
+            ] = true;
+          }
 
-  if (connectionSchema.schemas) {
-    filteredSchemas = searchDatabases(connectionSchema.schemas, searchRegEx);
+          filteredSchemas.push({
+            ...schema,
+            tables: filteredTables,
+          });
+        }
+      });
 
-    connectionSchema.schemas.forEach((schema) => {
-      const filteredTables = searchTables(schema.tables, searchRegEx);
-      const filteredSchema = { ...schema, tables: filteredTables };
-      if (filteredTables.length) {
-        filteredSchemas.push(filteredSchema);
+      if (filteredSchemas.length > 0) {
+        expanded[connectionSchema.connectionId] = true;
+        resultConnectionSchemas.push({
+          ...connectionSchema,
+          schemas: filteredSchemas,
+        } as ConnectionSchema);
       }
-    });
-    return { schemas: filteredSchemas } as ConnectionSchema;
+    }
   }
 
-  if (connectionSchema.tables) {
-    const filteredTables = searchTables(connectionSchema.tables, searchRegEx);
-    return { tables: filteredTables } as ConnectionSchema;
-  }
-
-  return connectionSchema;
+  return resultConnectionSchemas;
 }

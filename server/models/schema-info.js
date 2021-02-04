@@ -11,6 +11,15 @@ class SchemaInfo {
   }
 
   /**
+   * Get all schemaInfo
+   */
+  async getAllSchemas() {
+    const doc = await this.sequelizeDb.Cache.findAll({});
+
+    return doc;
+  }
+
+  /**
    * Get schemaInfo for schema id
    * @param {string} schemaCacheId
    */

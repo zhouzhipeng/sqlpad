@@ -207,6 +207,10 @@ export const api = {
     );
   },
 
+  getAllSchemas() {
+    return api.get<ConnectionSchema[]>('/api/all-schemas');
+  },
+
   useConnectionSchema(connectionId: string, reload?: boolean) {
     const qs = reload ? '?reload=true' : '';
     return useSWR<ConnectionSchema>(

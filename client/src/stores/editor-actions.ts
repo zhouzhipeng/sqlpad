@@ -8,6 +8,7 @@ import {
   ChartFields,
   Connection,
   ConnectionClient,
+  ConnectionSchema,
 } from '../types';
 import { api } from '../utilities/api';
 import { getHistory } from '../utilities/history';
@@ -690,6 +691,10 @@ export function setSchemaState(connectionId: string, schemaState: SchemaState) {
   setState({ schemaStates: update });
 }
 
+export function setAllSchemas(schemaStates: ConnectionSchema[] | undefined) {
+  setState({ allSchemas: schemaStates });
+}
+
 /**
  * Get schema via API and store into editor store
  * @param connectionId - connection id to get schema for
@@ -745,9 +750,27 @@ export async function loadSchema(connectionId: string, reload?: boolean) {
 
   if (connectionSchema?.schemas || connectionSchema?.tables) {
     updateCompletions(connectionSchema);
-  } else {
-    updateCompletions({ schemas: [] });
   }
+}
+
+/**
+ * Get all schemas from cache.
+ */
+export async function loadAllSchemas() {
+  const json = await api.getAllSchemas();
+  const { error, data } = json;
+
+  // @ts-ignore
+  for (let schema of data) {
+    // Refresh completions
+    const connectionSchema = schema;
+
+    if (connectionSchema?.schemas || connectionSchema?.tables) {
+      updateCompletions(connectionSchema);
+    }
+  }
+
+  setAllSchemas(data);
 }
 
 export function toggleSchemaItem(connectionId: string, item: { id: string }) {

@@ -57,6 +57,7 @@ export type EditorStoreState = {
   batches: Record<string, Batch>;
   statements: Record<string, Statement>;
   schemaStates: { [conectionId: string]: SchemaState };
+  allSchemas: ConnectionSchema[];
   getFocusedSession: () => EditorSession;
   getSession: (sessionId: string) => EditorSession | undefined;
 };
@@ -105,6 +106,7 @@ export const INITIAL_STATE = {
   schemaStates: {},
 };
 
+// @ts-ignore
 export const useEditorStore = create<EditorStoreState>((set, get) => ({
   ...INITIAL_STATE,
   getFocusedSession: () => {
@@ -289,6 +291,12 @@ export function useSessionBatch() {
         return batch;
       }
     }
+  });
+}
+
+export function useAllSchemas() {
+  return useEditorStore((s) => {
+    return s.allSchemas;
   });
 }
 

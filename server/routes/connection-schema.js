@@ -3,6 +3,7 @@ const router = require('express').Router();
 const mustHaveConnectionAccess = require('../middleware/must-have-connection-access.js');
 const ConnectionClient = require('../lib/connection-client');
 const wrap = require('../lib/wrap');
+const mustBeAuthenticated = require('../middleware/must-be-authenticated');
 
 /**
  * @param {Req} req
@@ -43,10 +44,35 @@ async function getConnectionSchema(req, res) {
   return res.utils.data(schemaInfo);
 }
 
+/**
+ * get all schemas
+ * @param {Req} req
+ * @param {Res} res
+ */
+async function getAllSchemas(req, res) {
+  const { models } = req;
+
+  const docs = await models.schemaInfo.getAllSchemas();
+
+  let arr = [];
+  for (let doc of docs) {
+    let schema = doc.data;
+    // query conenction
+    // eslint-disable-next-line no-await-in-loop
+    let conn = await models.connections.findOneById(schema.connectionId);
+    schema.connectionName = conn.name;
+    arr.push(schema);
+  }
+
+  return res.utils.data(arr);
+}
+
 router.get(
   '/api/connections/:connectionId/schema',
   mustHaveConnectionAccess,
   wrap(getConnectionSchema)
 );
+
+router.get('/api/all-schemas', mustBeAuthenticated, wrap(getAllSchemas));
 
 module.exports = router;

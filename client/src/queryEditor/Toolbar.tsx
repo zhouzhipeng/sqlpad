@@ -6,6 +6,7 @@ import ToolbarQueryName from './ToolbarQueryName';
 import ToolbarRunButton from './ToolbarRunButton';
 import ToolbarSpacer from './ToolbarSpacer';
 import ToolbarToggleSchemaButton from './ToolbarToggleSchemaButton';
+import SchemaSidebar from '../schema/SchemaSidebar';
 
 function Toolbar() {
   return (
@@ -19,7 +20,7 @@ function Toolbar() {
     >
       <div style={{ display: 'flex' }}>
         <ToolbarToggleSchemaButton />
-        <ConnectionDropDown />
+        {/*<SchemaSidebar />*/}
         <ToolbarSpacer />
         <ToolbarConnectionClientButton />
         <ToolbarSpacer grow />
