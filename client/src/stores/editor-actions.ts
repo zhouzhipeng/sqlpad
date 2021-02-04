@@ -18,6 +18,7 @@ import {
 } from '../utilities/localQueryText';
 import updateCompletions from '../utilities/updateCompletions';
 import {
+  AllSchemasState,
   EditorSession,
   INITIAL_SESSION,
   INITIAL_STATE,
@@ -691,7 +692,7 @@ export function setSchemaState(connectionId: string, schemaState: SchemaState) {
   setState({ schemaStates: update });
 }
 
-export function setAllSchemas(schemaStates: ConnectionSchema[] | undefined) {
+export function setAllSchemas(schemaStates: AllSchemasState) {
   setState({ allSchemas: schemaStates });
 }
 
@@ -757,8 +758,20 @@ export async function loadSchema(connectionId: string, reload?: boolean) {
  * Get all schemas from cache.
  */
 export async function loadAllSchemas() {
+  setAllSchemas({
+    loading: true,
+  });
+
   const json = await api.getAllSchemas();
   const { error, data } = json;
+
+  if (error) {
+    setAllSchemas({
+      loading: false,
+      error,
+    });
+    return;
+  }
 
   // @ts-ignore
   for (let schema of data) {
@@ -770,7 +783,11 @@ export async function loadAllSchemas() {
     }
   }
 
-  setAllSchemas(data);
+  setAllSchemas({
+    loading: false,
+    connectionSchemas: data,
+    error: undefined,
+  });
 }
 
 export function toggleSchemaItem(connectionId: string, item: { id: string }) {

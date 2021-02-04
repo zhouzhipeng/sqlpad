@@ -93,10 +93,10 @@ function SchemaSidebar() {
   const [schemaItemId, setSchemaItemId] = useState('');
 
   const expanded = useSessionSchemaExpanded(connectionId);
-  const allSchemas = useAllSchemas();
+  const { loading, connectionSchemas, error } = useAllSchemas();
 
   const filteredSchemaInfo = searchSchemaInfo(
-    allSchemas || [],
+    connectionSchemas || [],
     search,
     expanded
   );
@@ -190,23 +190,32 @@ function SchemaSidebar() {
   };
 
   let content: ReactNode = null;
-
-  content = (
-    <ul style={{ paddingLeft: 0 }}>
-      <List
-        // position absolute takes list out of flow,
-        // preventing some weird react-measure behavior in Firefox
-        style={{ position: 'absolute' }}
-        height={dimensions.height}
-        itemCount={visibleItems.length}
-        itemSize={22}
-        width={dimensions.width}
-        overscanCount={10}
-      >
-        {Row}
-      </List>
-    </ul>
-  );
+  if (error) {
+    content = <ErrorBlock>{error}</ErrorBlock>;
+  } else if (loading) {
+    content = (
+      <div className={styles.schemaSpinner}>
+        <SpinKitCube />
+      </div>
+    );
+  } else if (true) {
+    content = (
+      <ul style={{ paddingLeft: 0 }}>
+        <List
+          // position absolute takes list out of flow,
+          // preventing some weird react-measure behavior in Firefox
+          style={{ position: 'absolute' }}
+          height={dimensions.height}
+          itemCount={visibleItems.length}
+          itemSize={22}
+          width={dimensions.width}
+          overscanCount={10}
+        >
+          {Row}
+        </List>
+      </ul>
+    );
+  }
 
   // On right-click we'd like to show a context menu related to item clicked
   // For now this will be options to copy the full path of the item
@@ -214,6 +223,7 @@ function SchemaSidebar() {
   // * We take note of location clicked
   // * Move hidden menu button to location
   // * Fire a click event on that hidden menu button
+  // @ts-ignore
   function handleContextMenu(event: React.MouseEvent) {
     event.preventDefault();
 

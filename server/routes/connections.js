@@ -71,6 +71,7 @@ async function deleteConnection(req, res) {
     return res.utils.notFound();
   }
   await models.connections.removeOneById(params.id);
+  await models.schemaInfo.removeOneByConnectionId(params.id);
   return res.utils.data();
 }
 

@@ -11,6 +11,15 @@ class SchemaInfo {
   }
 
   /**
+   * delete cache
+   * @param connectionId
+   * @returns {Promise<*>}
+   */
+  async removeOneByConnectionId(connectionId) {
+    return this.sequelizeDb.Cache.destroy({ where: { connectionId } });
+  }
+
+  /**
    * Get all schemaInfo
    */
   async getAllSchemas() {

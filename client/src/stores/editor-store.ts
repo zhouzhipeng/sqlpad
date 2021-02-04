@@ -17,6 +17,12 @@ export interface SchemaState {
   error?: string;
 }
 
+export interface AllSchemasState {
+  loading: boolean;
+  connectionSchemas?: ConnectionSchema[];
+  error?: string;
+}
+
 export interface EditorSession {
   id: string;
   showSchema: boolean;
@@ -57,7 +63,7 @@ export type EditorStoreState = {
   batches: Record<string, Batch>;
   statements: Record<string, Statement>;
   schemaStates: { [conectionId: string]: SchemaState };
-  allSchemas: ConnectionSchema[];
+  allSchemas: AllSchemasState;
   getFocusedSession: () => EditorSession;
   getSession: (sessionId: string) => EditorSession | undefined;
 };
@@ -296,6 +302,10 @@ export function useSessionBatch() {
 
 export function useAllSchemas() {
   return useEditorStore((s) => {
+    if (!s.allSchemas) {
+      const emptySchemaState: AllSchemasState = { loading: false };
+      return emptySchemaState;
+    }
     return s.allSchemas;
   });
 }

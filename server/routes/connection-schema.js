@@ -60,8 +60,10 @@ async function getAllSchemas(req, res) {
     // query conenction
     // eslint-disable-next-line no-await-in-loop
     let conn = await models.connections.findOneById(schema.connectionId);
-    schema.connectionName = conn.name;
-    arr.push(schema);
+    if (conn) {
+      schema.connectionName = conn.name;
+      arr.push(schema);
+    }
   }
 
   return res.utils.data(arr);
