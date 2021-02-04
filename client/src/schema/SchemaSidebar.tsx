@@ -247,7 +247,7 @@ function SchemaSidebar() {
           <div style={{ display: 'flex' }}>
             <Input
               value={search}
-              placeholder="Search"
+              placeholder="Search Tables"
               onChange={(event: ChangeEvent<HTMLInputElement>) =>
                 setSearch(event.target.value)
               }
