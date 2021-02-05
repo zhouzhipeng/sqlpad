@@ -63,13 +63,12 @@ type AceCompletion = {
 
 /**
  * Updates global completions for ace editors in use.
- * @param  connectionSchema
+ * @param connectionSchemas
  */
-function updateCompletions(connectionSchema: ConnectionSchema) {
+function updateCompletions(connectionSchemas: ConnectionSchema[]) {
   debug('updating completions');
-  debug(connectionSchema);
 
-  if (connectionSchema === null || connectionSchema === undefined) {
+  if (!connectionSchemas) {
     return;
   }
 
@@ -84,23 +83,62 @@ function updateCompletions(connectionSchema: ConnectionSchema) {
   // This will be populated as the schema is traversed
   const tablePatterns: string[] = [];
 
-  if (connectionSchema.schemas) {
-    connectionSchema.schemas.forEach((schema) => {
-      const schemaCompletion: AceCompletion = {
-        id: schema.name.toLowerCase(),
-        name: schema.name.toLowerCase(),
-        type: 'schema',
-        value: schema.name,
-        score: 0,
-        meta: 'schema',
-      };
-      initialTableWantedSuggestions.push(schemaCompletion);
+  for (let connectionSchema of connectionSchemas) {
+    if (connectionSchema.schemas) {
+      connectionSchema.schemas.forEach((schema) => {
+        const schemaCompletion: AceCompletion = {
+          id: `${connectionSchema.connectionId}.${schema.name.toLowerCase()}`,
+          name: schema.name.toLowerCase(),
+          type: 'schema',
+          value: schema.name,
+          score: 0,
+          meta: 'schema',
+        };
+        initialTableWantedSuggestions.push(schemaCompletion);
 
-      schema.tables.forEach((table) => {
+        schema.tables.forEach((table) => {
+          const columnCompletions: AceCompletion[] = table.columns.map(
+            (column) => {
+              return {
+                id: `${connectionSchema.connectionId}.${schema.name}.${table.name}.${column.name}`.toLowerCase(),
+                name: column.name.toLowerCase(),
+                type: 'column',
+                value: column.name,
+                score: 0,
+                meta: `${column.dataType} ${column.description || ''}`.trim(),
+              };
+            }
+          );
+
+          const tableCompletion: AceCompletion = {
+            id: `${connectionSchema.connectionId}.${schema.name}.${table.name}`.toLowerCase(),
+            name: table.name.toLowerCase(),
+            type: 'table',
+            value: table.name,
+            score: 0,
+            meta: `table ${table.description || ''}`.trim(),
+            schemaCompletion: schemaCompletion,
+            columnCompletions,
+          };
+
+          tablePatterns.push(table.name);
+          tablePatterns.push(`${schema.name}\\.${table.name}`);
+
+          initialTableWantedSuggestions.push(tableCompletion);
+          if (!tablesBySchema[schemaCompletion.name]) {
+            tablesBySchema[schemaCompletion.name] = [];
+          }
+          tablesBySchema[schemaCompletion.name].push(tableCompletion);
+          tablesByName[tableCompletion.name] = tableCompletion;
+          tablesById[tableCompletion.id] = tableCompletion;
+        });
+      });
+    } else if (connectionSchema.tables) {
+      connectionSchema.tables.forEach((table) => {
         const columnCompletions: AceCompletion[] = table.columns.map(
           (column) => {
             return {
-              id: `${schema.name}.${table.name}.${column.name}`.toLowerCase(),
+              id: `${table.name}.${column.name}`.toLowerCase(),
               name: column.name.toLowerCase(),
               type: 'column',
               value: column.name,
@@ -110,57 +148,22 @@ function updateCompletions(connectionSchema: ConnectionSchema) {
           }
         );
 
+        tablePatterns.push(table.name);
+
         const tableCompletion: AceCompletion = {
-          id: `${schema.name}.${table.name}`.toLowerCase(),
+          id: table.name.toLowerCase(),
           name: table.name.toLowerCase(),
           type: 'table',
           value: table.name,
           score: 0,
           meta: `table ${table.description || ''}`.trim(),
-          schemaCompletion: schemaCompletion,
           columnCompletions,
         };
-
-        tablePatterns.push(table.name);
-        tablePatterns.push(`${schema.name}\\.${table.name}`);
-
         initialTableWantedSuggestions.push(tableCompletion);
-        if (!tablesBySchema[schemaCompletion.name]) {
-          tablesBySchema[schemaCompletion.name] = [];
-        }
-        tablesBySchema[schemaCompletion.name].push(tableCompletion);
         tablesByName[tableCompletion.name] = tableCompletion;
         tablesById[tableCompletion.id] = tableCompletion;
       });
-    });
-  } else if (connectionSchema.tables) {
-    connectionSchema.tables.forEach((table) => {
-      const columnCompletions: AceCompletion[] = table.columns.map((column) => {
-        return {
-          id: `${table.name}.${column.name}`.toLowerCase(),
-          name: column.name.toLowerCase(),
-          type: 'column',
-          value: column.name,
-          score: 0,
-          meta: `${column.dataType} ${column.description || ''}`.trim(),
-        };
-      });
-
-      tablePatterns.push(table.name);
-
-      const tableCompletion: AceCompletion = {
-        id: table.name.toLowerCase(),
-        name: table.name.toLowerCase(),
-        type: 'table',
-        value: table.name,
-        score: 0,
-        meta: `table ${table.description || ''}`.trim(),
-        columnCompletions,
-      };
-      initialTableWantedSuggestions.push(tableCompletion);
-      tablesByName[tableCompletion.name] = tableCompletion;
-      tablesById[tableCompletion.id] = tableCompletion;
-    });
+    }
   }
 
   // Create a big regex for table patterns to find tables

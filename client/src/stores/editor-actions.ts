@@ -750,7 +750,7 @@ export async function loadSchema(connectionId: string, reload?: boolean) {
     ?.connectionSchema;
 
   if (connectionSchema?.schemas || connectionSchema?.tables) {
-    updateCompletions(connectionSchema);
+    updateCompletions([connectionSchema]);
   }
 }
 
@@ -774,14 +774,7 @@ export async function loadAllSchemas() {
   }
 
   // @ts-ignore
-  for (let schema of data) {
-    // Refresh completions
-    const connectionSchema = schema;
-
-    if (connectionSchema?.schemas || connectionSchema?.tables) {
-      updateCompletions(connectionSchema);
-    }
-  }
+  updateCompletions(data);
 
   setAllSchemas({
     loading: false,
