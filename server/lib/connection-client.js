@@ -236,7 +236,7 @@ class ConnectionClient {
         'Expected rows to be an array but received %s.',
         typeof rows
       );
-      rows = [{ message: rows.message }];
+      rows = [{ message: rows.message || JSON.stringify(rows) }];
     }
 
     const columns = getColumns(rows);
