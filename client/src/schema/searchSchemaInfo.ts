@@ -28,6 +28,7 @@ function searchDatabases(databases: Schema[], searchRegEx: RegExp) {
  * Search connectionSchema (the hierarchy object storage of schema data) for the search string passed in
  * @param connectionSchemas
  * @param  search
+ * @param expanded
  */
 export default function searchSchemaInfo(
   connectionSchemas: ConnectionSchema[],
@@ -47,10 +48,10 @@ export default function searchSchemaInfo(
       connectionSchema.schemas.forEach((schema) => {
         const filteredTables = searchTables(schema.tables, searchRegEx);
         if (filteredTables.length) {
-          expanded[`${connectionSchema.connectionId}.${schema.name}`] = true;
+          expanded[`${connectionSchema.connectionName},${schema.name}`] = true;
           for (let table of filteredTables) {
             expanded[
-              `${connectionSchema.connectionId}.${schema.name}.${table.name}`
+              `${connectionSchema.connectionName},${schema.name},${table.name}`
             ] = true;
           }
 
@@ -62,7 +63,7 @@ export default function searchSchemaInfo(
       });
 
       if (filteredSchemas.length > 0) {
-        expanded[connectionSchema.connectionId] = true;
+        expanded[connectionSchema.connectionName] = true;
         resultConnectionSchemas.push({
           ...connectionSchema,
           schemas: filteredSchemas,

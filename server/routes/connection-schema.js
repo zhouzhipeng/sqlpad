@@ -14,7 +14,7 @@ async function getConnectionSchema(req, res) {
   const { connectionId } = req.params;
   const reload = req.query.reload === 'true';
 
-  const conn = await models.connections.findOneById(connectionId);
+  const conn = await models.connectiions.findOneById(connectionId);
 
   if (!conn) {
     return res.utils.notFound();
@@ -50,19 +50,44 @@ async function getConnectionSchema(req, res) {
  * @param {Res} res
  */
 async function getAllSchemas(req, res) {
-  const { models } = req;
-
-  const docs = await models.schemaInfo.getAllSchemas();
-
+  const { models, user } = req;
+  const reload = req.query.reload === 'true';
   let arr = [];
-  for (let doc of docs) {
-    let schema = doc.data;
-    // query conenction
-    // eslint-disable-next-line no-await-in-loop
-    let conn = await models.connections.findOneById(schema.connectionId);
-    if (conn) {
-      schema.connectionName = conn.name;
-      arr.push(schema);
+  if (reload) {
+    const conns = await models.connections.findAll();
+    for (let conn of conns) {
+      const connectionClient = new ConnectionClient(conn, user);
+      const schemaCacheId = connectionClient.getSchemaCacheId(2);
+
+      let schemaInfo;
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        schemaInfo = await connectionClient.getSchema();
+      } catch (error) {
+        // Assumption is that error is due to user configuration
+        // letting it bubble up results in 500, but it should be 400
+        return res.utils.error(error);
+      }
+      if (Object.keys(schemaInfo).length) {
+        schemaInfo.connectionId = conn.id;
+        // eslint-disable-next-line no-await-in-loop
+        await models.schemaInfo.saveSchemaInfo(schemaCacheId, schemaInfo);
+
+        arr.push(schemaInfo);
+      }
+    }
+  } else {
+    const docs = await models.schemaInfo.getAllSchemas();
+
+    for (let doc of docs) {
+      let schema = doc.data;
+      // query conenction
+      // eslint-disable-next-line no-await-in-loop
+      let conn = await models.connections.findOneById(schema.connectionId);
+      if (conn) {
+        schema.connectionName = conn.name;
+        arr.push(schema);
+      }
     }
   }
 

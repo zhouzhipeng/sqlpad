@@ -28,12 +28,15 @@ export default function getSchemaList(
       type: 'connection',
       name: connectionSchema.connectionName,
       description: '',
-      id: connectionSchema.connectionId,
+      id: connectionSchema.connectionName,
       level: 0,
     });
-    if (expanded[connectionSchema.connectionId] && connectionSchema?.schemas) {
+    if (
+      expanded[connectionSchema.connectionName] &&
+      connectionSchema?.schemas
+    ) {
       connectionSchema.schemas.forEach((schema) => {
-        const schemaId = `${connectionSchema.connectionId}.${schema.name}`;
+        const schemaId = `${connectionSchema.connectionName},${schema.name}`;
         schemaList.push({
           type: 'schema',
           name: schema.name,
@@ -43,7 +46,7 @@ export default function getSchemaList(
         });
         if (expanded[schemaId]) {
           schema.tables.forEach((table) => {
-            const tableId = `${connectionSchema.connectionId}.${schema.name}.${table.name}`;
+            const tableId = `${connectionSchema.connectionName},${schema.name},${table.name}`;
             schemaList.push({
               type: 'table',
               name: table.name,
@@ -53,7 +56,7 @@ export default function getSchemaList(
             });
             if (expanded[tableId]) {
               table.columns.forEach((column) => {
-                const columnId = `${connectionSchema.connectionId}.${schema.name}.${table.name}.${column.name}`;
+                const columnId = `${connectionSchema.connectionName},${schema.name},${table.name},${column.name}`;
                 schemaList.push({
                   type: 'column',
                   name: column.name,

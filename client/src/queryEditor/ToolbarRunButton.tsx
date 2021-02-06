@@ -44,7 +44,7 @@ function ToolbarRunButton() {
       <Button
         variant="primary"
         onClick={async () => {
-          await connectConnectionClient();
+          // await connectConnectionClient();
           runQuery();
         }}
         disabled={isRunning}

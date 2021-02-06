@@ -382,14 +382,6 @@ export const runQuery = async () => {
     connectionClient,
     selectedText,
   } = getState().getFocusedSession();
-
-  if (!connectionId) {
-    return setSession(focusedSessionId, {
-      queryError: 'Connection required',
-      selectedStatementId: '',
-    });
-  }
-
   if (!queryText) {
     return setSession(focusedSessionId, {
       queryError: 'SQL text required',
@@ -757,12 +749,12 @@ export async function loadSchema(connectionId: string, reload?: boolean) {
 /**
  * Get all schemas from cache.
  */
-export async function loadAllSchemas() {
+export async function loadAllSchemas(reload?: boolean) {
   setAllSchemas({
     loading: true,
   });
 
-  const json = await api.getAllSchemas();
+  const json = await api.getAllSchemas(reload);
   const { error, data } = json;
 
   if (error) {

@@ -47,29 +47,31 @@ class Connections {
   }
 
   async findAll() {
-    let connectionsFromDb = await this.sequelizeDb.Connections.findAll({
-      attributes: [
-        'id',
-        'name',
-        'description',
-        'driver',
-        'multiStatementTransactionEnabled',
-        'idleTimeoutSeconds',
-        'createdAt',
-        'updatedAt',
-      ],
-    });
-    connectionsFromDb = connectionsFromDb.map((conn) => {
-      let jsonConn = conn.toJSON();
-      jsonConn.editable = true;
-      return jsonConn;
-    });
+    let connections = await this.sequelizeDb.Connections.findAll({});
+    let result = [];
+    for (let connection of connections) {
+      if (connection) {
+        connection = connection.toJSON();
+        connection.editable = true;
+        connection = this.decipherConnection(connection);
+        result.push(this.decorateConnection(connection));
+      }
+    }
+    return result;
+  }
 
-    const allConnections = connectionsFromDb
-      .concat(this.config.getConnections())
-      .map((connection) => this.decorateConnection(connection));
+  async findOneByName(name) {
+    let connection = await this.sequelizeDb.Connections.findOne({
+      where: { name },
+    });
+    if (connection) {
+      connection = connection.toJSON();
+      connection.editable = true;
+      connection = this.decipherConnection(connection);
+      return this.decorateConnection(connection);
+    }
 
-    return _.sortBy(allConnections, (c) => c.name.toLowerCase());
+    return null;
   }
 
   async findOneById(id) {
@@ -124,6 +126,11 @@ class Connections {
       multiStatementTransactionEnabled,
       idleTimeoutSeconds,
     };
+
+    // validate connection name if duplicated
+    if (this.findOneByName(createObj.name)) {
+      throw new Error('connection name is duplicated.');
+    }
 
     // Old connections had driver-specific fields flat on connection object
     // With v5 those moved to data, but the old format needs to be supported

@@ -19,7 +19,11 @@ import Sidebar from '../common/Sidebar';
 import SpinKitCube from '../common/SpinKitCube';
 import Text from '../common/Text';
 import Tooltip from '../common/Tooltip';
-import { loadSchema, toggleSchemaItem } from '../stores/editor-actions';
+import {
+  loadAllSchemas,
+  loadSchema,
+  toggleSchemaItem,
+} from '../stores/editor-actions';
 import {
   useAllSchemas,
   useSchemaState,
@@ -34,13 +38,14 @@ const ICON_SIZE = 22;
 const ICON_STYLE = { marginBottom: -6, marginRight: 0, marginLeft: -6 };
 
 function formatIdentifiers(s: string, quoteChars: string = '') {
-  const leftQuote = quoteChars[0] || '';
-  const rightQuote = quoteChars[1] || quoteChars[0] || '';
-
-  return s
-    .split('.')
-    .map((s) => `${leftQuote}${s}${rightQuote}`)
-    .join('.');
+  // const leftQuote = quoteChars[0] || '';
+  // const rightQuote = quoteChars[1] || quoteChars[0] || '';
+  //
+  // return s
+  //   .split('.')
+  //   .map((s) => `${leftQuote}${s}${rightQuote}`)
+  //   .join('.');
+  return `/*${s}*/`;
 }
 
 /**
@@ -81,7 +86,6 @@ function CopyMenuItem({ id, value }: { id: string; value: string }) {
 }
 
 function SchemaSidebar() {
-  const connectionId = useSessionConnectionId();
   const [search, setSearch] = useState('');
   const [dimensions, setDimensions] = useState({
     width: -1,
@@ -92,8 +96,13 @@ function SchemaSidebar() {
   const [contextLeft, setContextLeft] = useState(0);
   const [schemaItemId, setSchemaItemId] = useState('');
 
-  const expanded = useSessionSchemaExpanded(connectionId);
+  const expanded = useSessionSchemaExpanded();
   const { loading, connectionSchemas, error } = useAllSchemas();
+
+  const handleRefreshClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    loadAllSchemas(true);
+  };
 
   const filteredSchemaInfo = searchSchemaInfo(
     connectionSchemas || [],
@@ -169,7 +178,7 @@ function SchemaSidebar() {
 
     function handleClick() {
       if (expandable) {
-        toggleSchemaItem(connectionId, row);
+        toggleSchemaItem('faked', row);
       }
     }
 
@@ -198,7 +207,7 @@ function SchemaSidebar() {
         <SpinKitCube />
       </div>
     );
-  } else if (true) {
+  } else {
     content = (
       <ul style={{ paddingLeft: 0 }}>
         <List
@@ -262,6 +271,14 @@ function SchemaSidebar() {
                 setSearch(event.target.value)
               }
             />
+            <IconButton
+              tooltip="Refresh schema"
+              style={{ marginLeft: 8 }}
+              disabled={loading}
+              onClick={handleRefreshClick}
+            >
+              <RefreshIcon />
+            </IconButton>
           </div>
 
           <Divider style={{ margin: '4px 0' }} />
@@ -270,14 +287,6 @@ function SchemaSidebar() {
           <OffScreenInput
             id="schema-copy-value-no-quote"
             value={formatIdentifiers(schemaItemId)}
-          />
-          <OffScreenInput
-            id="schema-copy-value-quote"
-            value={formatIdentifiers(schemaItemId, '"')}
-          />
-          <OffScreenInput
-            id="schema-copy-value-bracket"
-            value={formatIdentifiers(schemaItemId, '[]')}
           />
 
           {/* 

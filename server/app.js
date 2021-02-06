@@ -232,6 +232,12 @@ async function makeApp(config, models) {
         title: 'Payload Too Large',
       });
     }
+    if (err && err.message) {
+      return res.status(500).json({
+        title: err.message,
+      });
+    }
+
     return res.status(500).json({
       title: 'Internal Server Error',
     });

@@ -104,8 +104,34 @@ class Batches {
         statementText = statementText.trim();
         let prefixDbPattern = statementText.match(/^\/\*(.+)\*\//);
         let databaseInComment = null;
+        let connectionNameInComment = null;
+        let connectionIdInComment = null;
         if (prefixDbPattern) {
           databaseInComment = prefixDbPattern[1].trim();
+          if (databaseInComment.indexOf(',') !== -1) {
+            connectionNameInComment = databaseInComment.split(',')[0].trim();
+            databaseInComment = databaseInComment.split(',')[1].trim();
+            // query connection id by name
+            // eslint-disable-next-line no-await-in-loop
+            let connection = await this.sequelizeDb.Connections.findOne({
+              where: { name: connectionNameInComment },
+            });
+            if (connection) {
+              connectionIdInComment = connection.id;
+
+              statements.push({
+                batchId: createdBatch.id,
+                sequence: i++,
+                statementText,
+                status: error ? 'error' : 'queued',
+                error: error && { title: error.message },
+                connectionId: connectionIdInComment,
+                database: databaseInComment,
+              });
+              // eslint-disable-next-line no-continue
+              continue;
+            }
+          }
         }
         let ast;
         try {

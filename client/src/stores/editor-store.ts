@@ -266,6 +266,7 @@ export function useSessionSelectedStatementId() {
 }
 
 export function useSessionSchemaExpanded(connectionId?: string) {
+  connectionId = 'faked';
   return useEditorStore((s) => {
     const { schemaExpansions } = s.getFocusedSession();
     if (!connectionId || !schemaExpansions || !schemaExpansions[connectionId]) {

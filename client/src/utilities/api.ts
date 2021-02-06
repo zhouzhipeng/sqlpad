@@ -207,8 +207,8 @@ export const api = {
     );
   },
 
-  getAllSchemas() {
-    return api.get<ConnectionSchema[]>('/api/all-schemas');
+  getAllSchemas(reload?: boolean) {
+    return api.get<ConnectionSchema[]>(`/api/all-schemas?reload=${reload}`);
   },
 
   useConnectionSchema(connectionId: string, reload?: boolean) {

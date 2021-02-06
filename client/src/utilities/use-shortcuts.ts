@@ -18,7 +18,7 @@ function useShortcuts() {
       return false;
     });
     keymaster('ctrl+return, command+return', (e: any) => {
-      connectConnectionClient().then(() => runQuery());
+      runQuery();
       return false;
     });
     keymaster('shift+return', (e: any) => {
